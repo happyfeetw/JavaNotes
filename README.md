@@ -13,7 +13,7 @@
 
 欢迎fork并提出pr共同建设 :)
 
-***
+
 # 本项目使用方法
 本项目以文件形式组织, 请直接下载对应的xmind文件到本地.
 
@@ -28,7 +28,7 @@
   + 提交pr
   
 
-***
+
 # 更多交流
 https://gitter.im/spikeJava/community
 
