@@ -26,6 +26,12 @@
   + 创建你自己的分支, 并在分支上修改文件内容
   + 修改完成后请以文本形式总结描述修改的内容
   + 提交pr
+  
+
+***
+# 更多交流
+https://gitter.im/spikeJava/community
+
 
 # JavaNotes-En
 A graphic note about Java and relevant techs for self-teaching. Will be updated consistently.
