@@ -13,6 +13,20 @@
 
 欢迎fork并提出pr共同建设 :)
 
+***
+# 本项目使用方法
+本项目以文件形式组织, 请直接下载对应的xmind文件到本地.
+
+
+后续会陆续完善文件组织的形式.
+
+
+# 共同建设
+  + fork本项目到你的本地
+  + 创建你自己的分支, 并在分支上修改文件内容
+  + 修改完成后请以文本形式总结描述修改的内容
+  + 提交pr
+
 # JavaNotes-En
 A graphic note about Java and relevant techs for self-teaching. Will be updated consistently.
 
