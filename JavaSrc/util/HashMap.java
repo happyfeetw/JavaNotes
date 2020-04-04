@@ -1946,6 +1946,12 @@ public class HashMap<K,V> extends AbstractMap<K,V>
      * extends Node) so can be used as extension of either regular or
      * linked node.
      */
+    /**
+     * 一个小问题: 为什么不直接继承hashmap的node子类？
+     * stackoverflow:
+     *      https://stackoverflow.com/questions/61024926/why-in-java8-the-treenode-subclass-in-hashmap-extends-linkedhashmap-entry-instea
+     * 欢迎讨论！
+     */
     static final class TreeNode<K,V> extends LinkedHashMap.Entry<K,V> {
         TreeNode<K,V> parent;  // red-black tree links
         TreeNode<K,V> left;
