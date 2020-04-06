@@ -672,6 +672,7 @@ public abstract class AbstractQueuedSynchronizer
                  */
                 node.prev = t;  // 先把尾部节点从队列中拿出来，设置为新插入的节点的前驱节点
                 if (compareAndSetTail(t, node)) {   // CAS操作将新插入的node设置为尾节点
+                    // 交换之后node
                     t.next = node;  //将原来的尾节点的后继节点指向新插入的node节点（将原来的尾节点连接到CLH队列上）
                     return t;
                 }

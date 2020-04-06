@@ -870,6 +870,15 @@ public final class Unsafe {
      * holding <tt>expected</tt>.
      * @return <tt>true</tt> if successful
      */
+    /**
+     * 更新目标对象的值。
+     * 如果目标对象o与期望的值一致，则将其值设置为新值。
+     * @param o             被CAS操作的目标对象
+     * @param offset        目标对象在内存中的偏移量（内存地址的起始位置？）
+     * @param expected      目标对象的期望值（在CAS操作前应该是多少）
+     * @param x             目标对象的新值
+     * @return
+     */
     public final native boolean compareAndSwapObject(Object o, long offset,
                                                      Object expected,
                                                      Object x);
