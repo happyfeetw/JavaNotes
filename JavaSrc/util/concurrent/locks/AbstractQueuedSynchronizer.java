@@ -291,6 +291,11 @@ public abstract class AbstractQueuedSynchronizer
     implements java.io.Serializable {
 
     private static final long serialVersionUID = 7373984972572414691L;
+    /**
+     * 本类中的重要方法主要分为两大类：
+     *      1. 独占式地获取和释放同步状态；
+     *      2. 共享式地获取和释放同步状态。
+     */
 
     /**
      * Creates a new {@code AbstractQueuedSynchronizer} instance
@@ -376,6 +381,14 @@ public abstract class AbstractQueuedSynchronizer
      * Scherer and Michael Scott, along with members of JSR-166
      * expert group, for helpful ideas, discussions, and critiques
      * on the design of this class.
+     */
+    /**
+     * 等待队列（FIFO）中的节点
+     * 该节点是获取同步状态失败的线程在等待队列中的抽象
+     * 等待队列中，只有头节点获得了其线程的同步状态，获取同步状态失败的线程会被抽象成节点添加到队列的尾部
+     * 入队后的线程会尝试通过自旋的方式有限次地获取同步状态，若继续失败，则线程阻塞。
+     * 头部节点获取同步状态后会执行自己的线程，执行完毕后会释放同步状态，若此时后继节点被阻塞，则头节点线程会去唤醒后继节点的线程。
+     * 当后继线程恢复运行并成功获取同步状态后，会将头节点从队列中移除，并将自己设置为头节点。
      */
     static final class Node {
         /** Marker to indicate a node is waiting in shared mode */

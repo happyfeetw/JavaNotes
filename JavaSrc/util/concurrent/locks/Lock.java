@@ -181,6 +181,10 @@ public interface Lock {
      * circumstances and the exception type must be documented by that
      * {@code Lock} implementation.
      */
+    /**
+     * 获取锁
+     * 获取失败则会导致线程休眠直到获取到锁
+     */
     void lock();
 
     /**
@@ -229,6 +233,15 @@ public interface Lock {
      *         interrupted while acquiring the lock (and interruption
      *         of lock acquisition is supported)
      */
+    /**
+     * 一直尝试获取锁，除非当前线程被打断。
+     * 如果锁存在且可获得，该方法会立刻获得锁并返回。
+     * 获取锁失败同样会导致线程休眠，但有两个操作会结束其休眠状态：
+     *      1. 成功获取到锁；
+     *      2. 其他线程打断了当前线程，同时也打断了锁的获取过程
+     *
+     * @throws InterruptedException
+     */
     void lockInterruptibly() throws InterruptedException;
 
     /**
@@ -257,6 +270,9 @@ public interface Lock {
      *
      * @return {@code true} if the lock was acquired and
      *         {@code false} otherwise
+     */
+    /**
+     * 执行一次获取锁的操作，能获取就获取，获取失败则返回false
      */
     boolean tryLock();
 
@@ -352,6 +368,13 @@ public interface Lock {
      * @return A new {@link Condition} instance for this {@code Lock} instance
      * @throws UnsupportedOperationException if this {@code Lock}
      *         implementation does not support conditions
+     */
+    /**
+     * 返回一个与锁实例相关联的条件对象的实例
+     * 等待条件返回之前，当前线程必须拥有锁
+     * 调用Condition.await()方法会在线程开始waiting前自动释放锁，
+     * 然后在wait返回前自动重新获取锁
+     * @return
      */
     Condition newCondition();
 }

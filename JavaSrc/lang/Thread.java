@@ -279,6 +279,11 @@ class Thread implements Runnable {
      * concurrency control constructs such as the ones in the
      * {@link java.util.concurrent.locks} package.
      */
+    /**
+     * 该native方法会向线程调度器发出一个信息，
+     * 表明调用yield()方法的线程愿意让出其对处理器的占用。
+     * 单方面的表示。线程调度器可以选择忽略这个信息。
+     */
     public static native void yield();
 
     /**
@@ -297,6 +302,12 @@ class Thread implements Runnable {
      *          if any thread has interrupted the current thread. The
      *          <i>interrupted status</i> of the current thread is
      *          cleared when this exception is thrown.
+     */
+    /**
+     * 临时性地停止线程的执行，持续时间可以指定
+     * sleep操作不会导致线程失去对象监视器的所有权（aka 不会丢失锁）
+     * @param millis
+     * @throws InterruptedException
      */
     public static native void sleep(long millis) throws InterruptedException;
 
@@ -360,6 +371,10 @@ class Thread implements Runnable {
      * @param acc the AccessControlContext to inherit, or
      *            AccessController.getContext() if null
      */
+    /**
+     * 初始化线程的方法。
+     * 需要线程组、目标线程、目标线程的名字、线程创建需要请求的栈深度以及访问控制上下文对象
+     */
     private void init(ThreadGroup g, Runnable target, String name,
                       long stackSize, AccessControlContext acc) {
         if (name == null) {
@@ -409,6 +424,7 @@ class Thread implements Runnable {
         else
             this.contextClassLoader = parent.contextClassLoader;
         this.inheritedAccessControlContext =
+                // 设置访问控制上下文对象
                 acc != null ? acc : AccessController.getContext();
         this.target = target;
         setPriority(priority);
@@ -428,6 +444,10 @@ class Thread implements Runnable {
      *
      * @throws  CloneNotSupportedException
      *          always
+     */
+    /**
+     * 克隆线程毫无意义
+     * 应该创建新线程
      */
     @Override
     protected Object clone() throws CloneNotSupportedException {
@@ -693,6 +713,11 @@ class Thread implements Runnable {
      * @see        #run()
      * @see        #stop()
      */
+    /**
+     * 执行当前线程的方法。
+     * JVM会调用本方法中的run()方法。
+     * 同步方法 -> 一次只能start一个线程。
+     */
     public synchronized void start() {
         /**
          * This method is not invoked for the main method thread or "system"
@@ -701,6 +726,7 @@ class Thread implements Runnable {
          *
          * A zero status value corresponds to state "NEW".
          */
+        // 状态值0 -> NEW
         if (threadStatus != 0)
             throw new IllegalThreadStateException();
 
@@ -711,6 +737,7 @@ class Thread implements Runnable {
 
         boolean started = false;
         try {
+            // 真正执行线程的是native方法
             start0();
             started = true;
         } finally {
@@ -908,6 +935,7 @@ class Thread implements Runnable {
      * @revised 6.0
      * @spec JSR-51
      */
+    // 中断
     public void interrupt() {
         if (this != Thread.currentThread())
             checkAccess();
