@@ -47,8 +47,13 @@ package java.util.concurrent.atomic;
  * @author Doug Lea
  * @param <V> The type of object referred to by this reference
  */
+// 解决CAS中的ABA问题
 public class AtomicStampedReference<V> {
 
+    /**
+     * 使用Pair存放目标引用和其标记戳
+     * @param <T>
+     */
     private static class Pair<T> {
         final T reference;
         final int stamp;
@@ -56,6 +61,14 @@ public class AtomicStampedReference<V> {
             this.reference = reference;
             this.stamp = stamp;
         }
+
+        /**
+         * 提供一个用引用和标记戳创建Pair对象的静态方法
+         * @param reference
+         * @param stamp
+         * @param <T>
+         * @return
+         */
         static <T> Pair<T> of(T reference, int stamp) {
             return new Pair<T>(reference, stamp);
         }
@@ -69,6 +82,13 @@ public class AtomicStampedReference<V> {
      *
      * @param initialRef the initial reference
      * @param initialStamp the initial stamp
+     */
+    /**
+     * 构造方法
+     * AtomicStampedReference的构造函数实际上构造了一个Pair实例
+     * 调用静态方法，使用目标引用和初始标记戳创建Pair实例
+     * @param initialRef
+     * @param initialStamp
      */
     public AtomicStampedReference(V initialRef, int initialStamp) {
         pair = Pair.of(initialRef, initialStamp);
@@ -102,6 +122,11 @@ public class AtomicStampedReference<V> {
      */
     public V get(int[] stampHolder) {
         Pair<V> pair = this.pair;
+        /**
+         * 为什么不是 pair.stamp = stampHolder[0]; ？？
+         * stamp属性是final的；
+         * 该操作是将pair实例的标记戳取出来放入holder中作为记录
+         */
         stampHolder[0] = pair.stamp;
         return pair.reference;
     }
@@ -142,6 +167,9 @@ public class AtomicStampedReference<V> {
      * @param newStamp the new value for the stamp
      * @return {@code true} if successful
      */
+    /**
+     * 对pair实例进行cas操作
+     */
     public boolean compareAndSet(V   expectedReference,
                                  V   newReference,
                                  int expectedStamp,
@@ -161,6 +189,7 @@ public class AtomicStampedReference<V> {
      * @param newReference the new value for the reference
      * @param newStamp the new value for the stamp
      */
+    // 无条件设置
     public void set(V newReference, int newStamp) {
         Pair<V> current = pair;
         if (newReference != current.reference || newStamp != current.stamp)
