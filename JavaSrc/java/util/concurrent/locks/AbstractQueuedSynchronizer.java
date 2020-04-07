@@ -671,7 +671,7 @@ public abstract class AbstractQueuedSynchronizer
                 node.prev = t;  // 先将新节点的前驱节点链接到旧的尾部节点上，保证尾部节点不会在新节点入队成功后被孤立
                 if (compareAndSetTail(t, node)) {   // CAS操作将新插入的node设置为尾节点
                     t.next = node;  //将原来的尾节点的后继节点指向新插入的node节点（将原来的尾节点连接到CLH队列上）
-                    return t;
+                    return t;   // 最后返回旧的尾节点
                 }
             }
         }
@@ -941,15 +941,19 @@ public abstract class AbstractQueuedSynchronizer
      * @param arg the acquire argument
      * @return {@code true} if interrupted while waiting
      */
+    /**
+     * 为已入队的节点提供获取同步状态的方法
+     */
     final boolean acquireQueued(final Node node, int arg) {
         boolean failed = true;
         try {
             boolean interrupted = false;
             for (;;) {
+                // 先获取当前节点的前驱节点
                 final Node p = node.predecessor();
-                if (p == head && tryAcquire(arg)) {
-                    setHead(node);
-                    p.next = null; // help GC
+                if (p == head && tryAcquire(arg)) {     // 前驱节点是头节点 或 者尝试获取同步状态成功
+                    setHead(node);  // 将当前节点设置为CLH队列的头节点
+                    p.next = null; // help GC 将原先的头节点的后继节点置空，使其脱离队列，帮助gc回收引用。
                     failed = false;
                     return interrupted;
                 }
@@ -1159,6 +1163,11 @@ public abstract class AbstractQueuedSynchronizer
      *         correctly.
      * @throws UnsupportedOperationException if exclusive mode is not supported
      */
+    /**
+     *
+     * @param arg
+     * @return
+     */
     protected boolean tryAcquire(int arg) {
         throw new UnsupportedOperationException();
     }
@@ -1282,8 +1291,10 @@ public abstract class AbstractQueuedSynchronizer
      *        can represent anything you like.
      */
     /**
+     * 模版方法
+     * AQS的子类必须重写tryAcquire()方法才能通过调用父类的acquire()方法调用tryAcquire()
+     *
      * 独占模式下获取同步状态的方法，无视中断。
-     * 通过至少一次调用tryAcquire()方法实现。该方法由实现AQS的子类重写。
      * 返回成功表明获取成功。否则线程可能会
      *      1. 进入同步队列等待（尾部）； --> addWaiter(Node mode)
      *      2. 或反复被阻塞和恢复（LockSupport.park() & LockSupport.unpark()）；
