@@ -390,6 +390,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
         // 这就导致高28位没有参与索引值的计算，而只用到了低4位
         // 而对第四位进行索引值计算的结果，在散列程度上，自然比对更多位进行索引计算的结果要差得多
         // 故会有更大的几率发生哈希碰撞（使更多哈希码的索引落到同一个桶位上）
+        // 允许key为null
         return (key == null) ? 0 : (h = key.hashCode()) ^ (h >>> 16);
     }
 

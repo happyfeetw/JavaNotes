@@ -127,6 +127,7 @@ import java.util.function.BiFunction;
  * @see     TreeMap
  * @since JDK1.0
  */
+// 全员synchronize
 public class Hashtable<K,V>
     extends Dictionary<K,V>
     implements Map<K,V>, Cloneable, java.io.Serializable {
@@ -207,6 +208,7 @@ public class Hashtable<K,V>
      * Constructs a new, empty hashtable with a default initial capacity (11)
      * and load factor (0.75).
      */
+    // hashtable的默认初始化大小11
     public Hashtable() {
         this(11, 0.75f);
     }
@@ -452,6 +454,9 @@ public class Hashtable<K,V>
      *               <code>null</code>
      * @see     Object#equals(Object)
      * @see     #get(Object)
+     */
+    /**
+     * key与value都不能为空
      */
     public synchronized V put(K key, V value) {
         // Make sure the value is not null
