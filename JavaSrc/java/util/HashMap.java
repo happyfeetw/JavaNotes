@@ -807,7 +807,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
                 // 根据哈希表的初始长度创建新的哈希表
             Node<K,V>[] newTab = (Node<K,V>[])new Node[newCap];
         table = newTab;
-        // 对哈希表扩容
+        // 计算扩容后元素在新哈希表中的位置
         if (oldTab != null) {
             for (int j = 0; j < oldCap; ++j) {
                 Node<K,V> e;
@@ -816,13 +816,14 @@ public class HashMap<K,V> extends AbstractMap<K,V>
                     oldTab[j] = null;
                     // 该桶内的链表上只有一个节点
                     if (e.next == null)
-                        // 将该元素直接添加到新表中，其在新表中的索引位置
+                        // 将该元素直接添加到新表中，其在新表中的索引位置与旧表中的位置相同
+                        // 用新容量-1跟节点的hash码作与运算，得到的结果等于原哈希值 -> 即元素位置不变
                         newTab[e.hash & (newCap - 1)] = e;
                     else if (e instanceof TreeNode)
                         // 如果是该桶内是红黑树（e节点是红黑树的根节点），调用红黑树节点的split方法
                         ((TreeNode<K,V>)e).split(this, newTab, j, oldCap);
                     else { // preserve order
-                        // 如果荣内是普通链表实现
+                        // 如果桶内是普通链表实现
                         // 新建两个新链表，lo链表和hi链表
                         Node<K,V> loHead = null, loTail = null;
                         Node<K,V> hiHead = null, hiTail = null;
@@ -874,9 +875,10 @@ public class HashMap<K,V> extends AbstractMap<K,V>
                          *      2.位置改变，新位置的索引值为[j+扩表前的表容量，也即（e.hash & oldCap） 运算的结果]-> (e.hash & oldCap) != 0
                          * ********************************************
                          * 在jdk1.7中，
-                         *      1. 对扩容后的元素位置使用indexFor(int hash, int newCapacity)方法计算
+                         *      1. 对扩容后的元素位置计算（transfer方法中）使用indexFor(int hash, int newCapacity)方法
                          *      2. 在向新表插入节点的时候采用头插法
-                         * 这两点导致在并发情况下，多个线程对同一个hashmap的put操作，在触发resize的情况下导致死循环和元素丢失的问题。
+                         * 这两点导致在并发情况下，多个线程对同一个hashmap的put操作，在触发resize的情况下形成链表环。
+                         * 存在链表环的情况下，如果get的元素在环形链表上，则会引起死循环，耗尽系统资源
                          * 具体参考：http://www.jinrongtong5.com/article/46
                          */
                     }
@@ -1561,6 +1563,9 @@ public class HashMap<K,V> extends AbstractMap<K,V>
     /* ------------------------------------------------------------ */
     // iterators
 
+    // 哈希迭代器
+    // hashmap中的最通用的迭代器
+    // 核心方法为nextNode()
     abstract class HashIterator {
         Node<K,V> next;        // next entry to return
         Node<K,V> current;     // current entry
@@ -1584,7 +1589,8 @@ public class HashMap<K,V> extends AbstractMap<K,V>
         final Node<K,V> nextNode() {
             Node<K,V>[] t;
             Node<K,V> e = next;
-            if (modCount != expectedModCount)
+            if (modCount != expectedModCount)   // 判断期望的修改次数与当前修改次数是否一致
+                // 不一致则抛出并发修改异常（快速失败fast-fail）
                 throw new ConcurrentModificationException();
             if (e == null)
                 throw new NoSuchElementException();
