@@ -1367,6 +1367,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * Stripped-down version of helper class used in previous version,
      * declared for the sake of serialization compatibility
      */
+    // 继承了 ReentrantLock，是一种可冲入锁
     static class Segment<K,V> extends ReentrantLock implements Serializable {
         private static final long serialVersionUID = 2249069246763182397L;
         final float loadFactor;
