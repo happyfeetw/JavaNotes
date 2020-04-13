@@ -666,7 +666,7 @@ public abstract class AbstractQueuedSynchronizer
                  * 在CAS操作前将队列中的尾节点设置为新节点的前驱节点，而不是在CAS操作之后设置。其原因主要有两方面：
                  *      1. 目前基于CAS操作的双向链表插入算法没有完美的实现；
                  *      2. 这样的方式可以保证在任意一个时间点，尾节点的前驱节点不会为null，从而导致尾节点被移除造成数据丢失。
-                 *         比如： todo 还没搞清楚为什么要先将新节点的前驱节点链接到尾节点
+                 *         比如： todo 还没搞清楚为什么要先将新节点的前驱节点链接到尾节点（tail.prev在什么情况下会是null）
                  */
                 node.prev = t;  // 先将新节点的前驱节点链接到旧的尾部节点上，保证尾部节点不会在新节点入队成功后被孤立
                 if (compareAndSetTail(t, node)) {   // CAS操作将新插入的node设置为尾节点
@@ -951,12 +951,21 @@ public abstract class AbstractQueuedSynchronizer
             for (;;) {
                 // 先获取当前节点的前驱节点
                 final Node p = node.predecessor();
+                /**
+                 * 检测当前节点的前驱节点是否为clh队列的头节点。此判断是clh队列中节点尝试获取同步状态的资格判断。
+                 * 如果是，则调用tryAcquire，尝试获取同步状态。
+                 * 成功获取后，设置当前节点为clh的头节点
+                 */
                 if (p == head && tryAcquire(arg)) {     // 前驱节点是头节点 或 者尝试获取同步状态成功
                     setHead(node);  // 将当前节点设置为CLH队列的头节点
                     p.next = null; // help GC 将原先的头节点的后继节点置空，使其脱离队列，帮助gc回收引用。
                     failed = false;
                     return interrupted;
                 }
+                /**
+                 * 获取同步状态失败，则会先判断是否要将当前线程挂起
+                 * 如果在挂起过程中，节点的线程被中断，则将其interrupted标志设为true
+                 */
                 if (shouldParkAfterFailedAcquire(p, node) &&
                     parkAndCheckInterrupt())
                     interrupted = true;

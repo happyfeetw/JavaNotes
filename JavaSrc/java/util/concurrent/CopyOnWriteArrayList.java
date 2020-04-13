@@ -88,6 +88,17 @@ import java.util.function.UnaryOperator;
  * @author Doug Lea
  * @param <E> the type of elements held in this collection
  */
+
+/**
+ * 线程安全的list
+ * 基于COW思想，保证最终数据的最终一致性（add方法中执行setArray()成功后才是最终一致）
+ * 与读写锁相比，更加灵活的地方在于写操作不会阻塞并发的读操作。
+ * 而读写锁则保证了强一致性。
+ *
+ * 另外一个问题是内存占用问题。
+ * 如果数组本身比较大，则写操作触发的数组复制将会大量消耗内存资源，
+ * 严重时可能会导致monitor GC。
+ */
 public class CopyOnWriteArrayList<E>
     implements List<E>, RandomAccess, Cloneable, java.io.Serializable {
     private static final long serialVersionUID = 8673264195747942595L;
@@ -96,6 +107,7 @@ public class CopyOnWriteArrayList<E>
     final transient ReentrantLock lock = new ReentrantLock();
 
     /** The array, accessed only via getArray/setArray. */
+    // 核心数组，通过volatile保证其在内存中的可见性
     private transient volatile Object[] array;
 
     /**
@@ -103,6 +115,7 @@ public class CopyOnWriteArrayList<E>
      * from CopyOnWriteArraySet class.
      */
     final Object[] getArray() {
+        // 返回的array在内存中是多线程可见的，并且是瞬时的
         return array;
     }
 
@@ -110,6 +123,9 @@ public class CopyOnWriteArrayList<E>
      * Sets the array.
      */
     final void setArray(Object[] a) {
+        // 将新数组设置给当前数组引用
+        // 这样保证新数组被写线程修改的值会被volatile同步到内存中
+        // 即修改操作对于并发的读操作是可见的
         array = a;
     }
 
@@ -430,14 +446,23 @@ public class CopyOnWriteArrayList<E>
      * @param e element to be appended to this list
      * @return {@code true} (as specified by {@link Collection#add})
      */
+    /**
+     * 向COW列表中添加元素
+     * 由于该类持有的数组引用被volatile修饰
+     * 所以写操作产生的修改会被并发的读线程读到（happens-before原则）
+     */
     public boolean add(E e) {
         final ReentrantLock lock = this.lock;
+        // 对写操作加上可重入锁
         lock.lock();
         try {
+            // 先获取当前数组的引用
             Object[] elements = getArray();
             int len = elements.length;
+            // 复制一份新数组出来
             Object[] newElements = Arrays.copyOf(elements, len + 1);
             newElements[len] = e;
+            // 将修改后的新数组指向当前数组引用
             setArray(newElements);
             return true;
         } finally {
