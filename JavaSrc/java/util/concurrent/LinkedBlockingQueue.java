@@ -155,12 +155,14 @@ public class LinkedBlockingQueue<E> extends AbstractQueue<E>
     private final ReentrantLock takeLock = new ReentrantLock();
 
     /** Wait queue for waiting takes */
+    // 控制消费者线程的条件对象
     private final Condition notEmpty = takeLock.newCondition();
 
     /** Lock held by put, offer, etc */
     private final ReentrantLock putLock = new ReentrantLock();
 
     /** Wait queue for waiting puts */
+    // 控制生产者线程的条件对象
     private final Condition notFull = putLock.newCondition();
 
     /**
@@ -332,10 +334,12 @@ public class LinkedBlockingQueue<E> extends AbstractQueue<E>
         if (e == null) throw new NullPointerException();
         // Note: convention in all put/take/etc is to preset local var
         // holding count negative to indicate failure unless set.
+        // 默认用负值表示失败
         int c = -1;
         Node<E> node = new Node<E>(e);
         final ReentrantLock putLock = this.putLock;
         final AtomicInteger count = this.count;
+        // 对put操作的加锁
         putLock.lockInterruptibly();
         try {
             /*
@@ -347,11 +351,15 @@ public class LinkedBlockingQueue<E> extends AbstractQueue<E>
              * for all other uses of count in other wait guards.
              */
             while (count.get() == capacity) {
+                // 队列满了就阻塞当前线程
                 notFull.await();
             }
+            // 队列不满则入队
             enqueue(node);
+            // 状态记录原子递增
             c = count.getAndIncrement();
             if (c + 1 < capacity)
+                // 如果队列中有位置，则会唤醒生产线程，向队列中添加元素
                 notFull.signal();
         } finally {
             putLock.unlock();
