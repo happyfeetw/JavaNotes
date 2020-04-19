@@ -591,10 +591,15 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
     /*
      * Encodings for Node hash fields. See above for explanation.
      */
-    static final int MOVED     = -1; // hash for forwarding nodes
-    static final int TREEBIN   = -2; // hash for roots of trees
-    static final int RESERVED  = -3; // hash for transient reservations
-    static final int HASH_BITS = 0x7fffffff; // usable bits of normal node hash
+    /**
+     * 针对桶节点的hash属性的编码，
+     * 表示一个哈希值的状态。
+     * 对应的编码所表示的含义如下所示
+     */
+    static final int MOVED     = -1; // hash for forwarding nodes   所有新插入的节点的哈希编码用-1表示
+    static final int TREEBIN   = -2; // hash for roots of trees     所有红黑树的根节点的哈希编码用-2表示
+    static final int RESERVED  = -3; // hash for transient reservations     所有临时保存的节点的哈希编码用-3表示
+    static final int HASH_BITS = 0x7fffffff; // usable bits of normal node hash     所有普通节点的哈希编码用 0x7fffffff 表示
 
     /** Number of CPUS, to place bounds on some sizings */
     static final int NCPU = Runtime.getRuntime().availableProcessors();
@@ -681,6 +686,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * to incorporate impact of the highest bits that would otherwise
      * never be used in index calculations because of table bounds.
      */
+    // 哈希扩散，充分利用哈希码的高16位参与桶位索引的计算，减少hash冲突
     static final int spread(int h) {
         return (h ^ (h >>> 16)) & HASH_BITS;
     }
@@ -755,6 +761,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
         return (Node<K,V>)U.getObjectVolatile(tab, ((long)i << ASHIFT) + ABASE);
     }
 
+    // 针对哈希表内元素的cas操作
     static final <K,V> boolean casTabAt(Node<K,V>[] tab, int i,
                                         Node<K,V> c, Node<K,V> v) {
         return U.compareAndSwapObject(tab, ((long)i << ASHIFT) + ABASE, c, v);
@@ -792,10 +799,20 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * creation, or 0 for default. After initialization, holds the
      * next element count value upon which to resize the table.
      */
+    /**
+     * 哈希表初始化和容量调整的控制器。
+     * <0时，初始化为-1， 其他情况 = -(1+正在进行容量调整的线程数量)
+     * 另外，在table为null是，该值为哈希表的初始化大小，默认是0
+     * 初始化之后，该变量值为下次触发扩容时所需要的元素数量
+     */
     private transient volatile int sizeCtl;
 
     /**
      * The next table index (plus one) to split while resizing.
+     */
+    /**
+     * 开始扩容时，该变量表示原哈希表的长度
+     * 表明元素迁移的过程是从旧表的尾部向头部进行
      */
     private transient volatile int transferIndex;
 
@@ -940,7 +957,8 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                 if ((ek = e.key) == key || (ek != null && key.equals(ek)))
                     return e.val;
             }
-            else if (eh < 0)
+            else if (eh < 0)    //说明桶e已经迁移完成，或者该槽中存放的是红黑树的根节点
+                // 头节点哈希值小于0时
                 return (p = e.find(h, key)) != null ? p.val : null;
             while ((e = e.next) != null) {
                 if (e.hash == h &&
@@ -1008,26 +1026,49 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
 
     /** Implementation for put and putIfAbsent */
     final V putVal(K key, V value, boolean onlyIfAbsent) {
-        if (key == null || value == null) throw new NullPointerException();
-        int hash = spread(key.hashCode());
+        if (key == null || value == null) throw new NullPointerException(); // key不能为空
+        int hash = spread(key.hashCode());  // 哈希扩散，充分利用哈希码的高位
         int binCount = 0;
         for (Node<K,V>[] tab = table;;) {
             Node<K,V> f; int n, i, fh;
             if (tab == null || (n = tab.length) == 0)
                 tab = initTable();
+            // 每次循环都计算一次当前桶在哈希表中的位置，因为此时可能刚好完成扩容操作
+            // 完成扩容操作后，table大小会发生变化，造成同一个哈希桶在扩容前后的桶位发生变化
+            // 因此需要重新计算同一个哈希桶的当前桶位
             else if ((f = tabAt(tab, i = (n - 1) & hash)) == null) {
+                // 如果桶位i中的元素为空，则新建一个节点并通过CAS直接插入
                 if (casTabAt(tab, i, null,
                              new Node<K,V>(hash, key, value, null)))
                     break;                   // no lock when adding to empty bin
             }
+            // 如果当前节点的哈希值为MOVED(新插入的节点)
+            // 说明有其他线程正在对本哈希表进行扩容
             else if ((fh = f.hash) == MOVED)
+                // 配合其他线程完成扩容过程的元素迁移
+                // 然后拿到一个迁移之后的新表。
                 tab = helpTransfer(tab, f);
-            else {
+            else {  // 若非初始化、插入新节点、扩容的情况
                 V oldVal = null;
-                synchronized (f) {
+                // 对该桶位元素加锁，防止对该桶的并发put、remove和transfer操作
+                synchronized (f) {  // 直接使用关键字加锁而不是ReentrantLock的原因，可能是避免创建过多锁对象造成资源浪费
+                    /**
+                     * 该条件判断哈希表的当前桶位元素是否是f
+                     * 如果不是，则表明
+                     *      1. 该桶位上原来的元素已经被remove；
+                     *      2. 该桶位上原来的元素被迁移到新表的某个位置上了
+                     * 如果条件通过，则继续进行put操作
+                     * 如果条件不通过，则直接跳过同步代码块执行后续代码(重新来一次put操作，对该节点加锁后重新判断)
+                     */
                     if (tabAt(tab, i) == f) {
+                        /**
+                         * 判断当前节点f的哈希值
+                         * 如果f的哈希值为-1，则表明该节点为ForwardingNode(头节点)
+                         * 反之，如果f的哈希值>=0，表示节点f为链表上的节点
+                         */
                         if (fh >= 0) {
                             binCount = 1;
+                            // 遍历哈希表元素
                             for (Node<K,V> e = f;; ++binCount) {
                                 K ek;
                                 if (e.hash == hash &&
@@ -1039,18 +1080,18 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                                     break;
                                 }
                                 Node<K,V> pred = e;
-                                if ((e = e.next) == null) {
-                                    pred.next = new Node<K,V>(hash, key,
-                                                              value, null);
+                                if ((e = e.next) == null) {     // 当遍历到最后一个节点时
+                                    // 用传入的key和value以及根据key计算并扩散得到的hash值新建一个节点，并插入链表的尾部
+                                    pred.next = new Node<K,V>(hash, key, value, null);
                                     break;
                                 }
                             }
                         }
-                        else if (f instanceof TreeBin) {
+                        // 如果节点f是红黑树的根节点
+                         else if (f instanceof TreeBin) {
                             Node<K,V> p;
                             binCount = 2;
-                            if ((p = ((TreeBin<K,V>)f).putTreeVal(hash, key,
-                                                           value)) != null) {
+                            if ((p = ((TreeBin<K,V>)f).putTreeVal(hash, key, value)) != null) {
                                 oldVal = p.val;
                                 if (!onlyIfAbsent)
                                     p.val = value;
@@ -1067,6 +1108,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                 }
             }
         }
+        // 判断是否需要扩容
         addCount(1L, binCount);
         return null;
     }
@@ -1106,10 +1148,18 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
         int hash = spread(key.hashCode());
         for (Node<K,V>[] tab = table;;) {
             Node<K,V> f; int n, i, fh;
+
             if (tab == null || (n = tab.length) == 0 ||
-                (f = tabAt(tab, i = (n - 1) & hash)) == null)
+                    /**
+                     * 计算节点所在的哈希桶的桶位，
+                     * 确保每次开始remove前，
+                     * 要操作的目标元素的桶位是正确的
+                     */
+                    (f = tabAt(tab, i = (n - 1) & hash)) == null)
                 break;
             else if ((fh = f.hash) == MOVED)
+                // 有其他线程正在对哈希表扩容
+                // 则协助其完成扩容，拿到新表重新操作
                 tab = helpTransfer(tab, f);
             else {
                 V oldVal = null;
@@ -1367,8 +1417,22 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * Stripped-down version of helper class used in previous version,
      * declared for the sake of serialization compatibility
      */
-    // 继承了 ReentrantLock，是一种可冲入锁
+    /**
+     * 继承了 ReentrantLock，是一种可重入锁
+     * 为了兼容1.7版本的Segment而编写的内部类
+     * @param <K>
+     * @param <V>
+     */
     static class Segment<K,V> extends ReentrantLock implements Serializable {
+
+        // 1.7中segment的构造
+        //transient volatile HashEntry<K,V>[] table;
+        //transient int count;
+        //transient int modCount; // 为迭代器提供fail-fast机制
+        //transient int threshold;
+        //final float loadFactor;
+
+
         private static final long serialVersionUID = 2249069246763182397L;
         final float loadFactor;
         Segment(float lf) { this.loadFactor = lf; }
@@ -2161,17 +2225,29 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
     /**
      * A node inserted at head of bins during transfer operations.
      */
+    /**
+     * 表示在扩容/缩容操作时，哈希桶中的头节点
+     * @param <K>
+     * @param <V>
+     */
     static final class ForwardingNode<K,V> extends Node<K,V> {
+        // 新表的引用
         final Node<K,V>[] nextTable;
         ForwardingNode(Node<K,V>[] tab) {
+            // ForwardingNode的hash值为MOVED
+            // 若一个节点的hash为moved，表示该桶中的所有节点都是已经迁移完成的
             super(MOVED, null, null, null);
             this.nextTable = tab;
         }
 
+        /**
+         * todo
+         */
         Node<K,V> find(int h, Object k) {
             // loop to avoid arbitrarily deep recursion on forwarding nodes
             outer: for (Node<K,V>[] tab = nextTable;;) {
-                Node<K,V> e; int n;
+                Node<K,V> e;
+                int n;  // 新表的长度
                 if (k == null || tab == null || (n = tab.length) == 0 ||
                     (e = tabAt(tab, (n - 1) & h)) == null)
                     return null;
@@ -2221,12 +2297,13 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
     /**
      * Initializes table, using the size recorded in sizeCtl.
      */
+    // 初始化哈希表
     private final Node<K,V>[] initTable() {
         Node<K,V>[] tab; int sc;
         while ((tab = table) == null || tab.length == 0) {
             if ((sc = sizeCtl) < 0)
                 Thread.yield(); // lost initialization race; just spin
-            else if (U.compareAndSwapInt(this, SIZECTL, sc, -1)) {
+            else if (U.compareAndSwapInt(this, SIZECTL, sc, -1)) {  // 通过CAS操作比较
                 try {
                     if ((tab = table) == null || tab.length == 0) {
                         int n = (sc > 0) ? sc : DEFAULT_CAPACITY;
@@ -2365,8 +2442,19 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * Moves and/or copies the nodes in each bin to new table. See
      * above for explanation.
      */
+    /**
+     * 扩容过程中的元素转移
+     */
     private final void transfer(Node<K,V>[] tab, Node<K,V>[] nextTab) {
         int n = tab.length, stride;
+        /**
+         * stride元素表示每个线程一次迁移过程中处理的哈希桶的个数。
+         * 每当一个线程完成了迁移，transferIndex值就会自减一个stride，
+         * 下一个线程的迁移工作从transferIndex-stride处开始，向前再处理stride个桶位。
+         * 单核CPU条件下，stride值为表的长度，表示一次迁移工作要对整表进行。
+         * 多核CPU条件下，先将表长分成8份(n>>>3)再与CPU个数相除取整，
+         * 如果每个cpu上处理的stride个数小于最小stride，则采用最小值；否则使用计算后的stride
+         */
         if ((stride = (NCPU > 1) ? (n >>> 3) / NCPU : n) < MIN_TRANSFER_STRIDE)
             stride = MIN_TRANSFER_STRIDE; // subdivide range
         if (nextTab == null) {            // initiating
@@ -2447,6 +2535,8 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                             }
                             for (Node<K,V> p = f; p != lastRun; p = p.next) {
                                 int ph = p.hash; K pk = p.key; V pv = p.val;
+                                // 新表中的节点都是新建的，而不是修改原节点的next指针指向新表的桶位
+                                // 这样做是为了保证并发get时得到正确的结果
                                 if ((ph & n) == 0)
                                     ln = new Node<K,V>(ph, pk, pv, ln);
                                 else
@@ -2454,9 +2544,11 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                             }
                             setTabAt(nextTab, i, ln);
                             setTabAt(nextTab, i + n, hn);
+                            // 将桶位中链表的头节点设置为forwardingNode
                             setTabAt(tab, i, fwd);
                             advance = true;
                         }
+                        // 红黑树的情况
                         else if (f instanceof TreeBin) {
                             TreeBin<K,V> t = (TreeBin<K,V>)f;
                             TreeNode<K,V> lo = null, loTail = null;
@@ -2867,6 +2959,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
          * Finds or adds a node.
          * @return null if added
          */
+        // 向红黑树的节点put元素
         final TreeNode<K,V> putTreeVal(int h, K k, V v) {
             Class<?> kc = null;
             boolean searched = false;
