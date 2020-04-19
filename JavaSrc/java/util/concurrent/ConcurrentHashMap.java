@@ -1032,6 +1032,10 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
         for (Node<K,V>[] tab = table;;) {
             Node<K,V> f; int n, i, fh;
             if (tab == null || (n = tab.length) == 0)
+            /**
+             * 哈希表的初始化在put方法中完成
+             * 在初始化方法中，
+              */
                 tab = initTable();
             // 每次循环都计算一次当前桶在哈希表中的位置，因为此时可能刚好完成扩容操作
             // 完成扩容操作后，table大小会发生变化，造成同一个哈希桶在扩容前后的桶位发生变化
@@ -2302,8 +2306,15 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
         Node<K,V>[] tab; int sc;
         while ((tab = table) == null || tab.length == 0) {
             if ((sc = sizeCtl) < 0)
+            /**
+             *  sizeCtl<0表示正在有线程对表进行扩容操作，或者正在有其他线程对哈希表进行初始化
+             *  此时当前线程会通过yiedl()让出cpu资源等待初始化或者扩容完成再次进行put
+             */
                 Thread.yield(); // lost initialization race; just spin
-            else if (U.compareAndSwapInt(this, SIZECTL, sc, -1)) {  // 通过CAS操作比较
+                // 通过CAS操作比较,如果SIZECTL=-1设置成功，表示当前线程完成了哈希表的初始化
+                // 该CAS操作会同步修改SIZECTL常量的值，该值对应会同步sizeCtl常量的值
+                // 进而通过volatile关键字被其他线程共享
+            else if (U.compareAndSwapInt(this, SIZECTL, sc, -1)) {
                 try {
                     if ((tab = table) == null || tab.length == 0) {
                         int n = (sc > 0) ? sc : DEFAULT_CAPACITY;
