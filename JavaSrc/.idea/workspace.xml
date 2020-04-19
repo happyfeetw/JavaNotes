@@ -4,7 +4,6 @@
     <list default="true" id="c766bdaf-97f4-4c76-9c60-9a4f5381f02b" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/java/util/HashMap.java" beforeDir="false" afterPath="$PROJECT_DIR$/java/util/HashMap.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Java脑图.xmind" beforeDir="false" afterPath="$PROJECT_DIR$/../Java脑图.xmind" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -40,7 +39,6 @@
   </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
-    <option name="showExcludedFiles" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
   <component name="PropertiesComponent">
@@ -79,17 +77,25 @@
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="1" />
   </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="oldMeFiltersMigrated" value="true" />
+  </component>
   <component name="VcsManagerConfiguration">
     <option name="ADD_EXTERNAL_FILES_SILENTLY" value="true" />
   </component>
   <component name="WindowStateProjectService">
+    <state x="100" y="100" width="1480" height="850" key="DiffContextDialog" timestamp="1587281517312">
+      <screen x="0" y="23" width="1680" height="971" />
+    </state>
+    <state x="100" y="100" width="1480" height="850" key="DiffContextDialog/0.0.1680.1050@0.0.1680.1050" timestamp="1587281428770" />
+    <state x="100" y="100" width="1480" height="850" key="DiffContextDialog/0.23.1680.971@0.23.1680.971" timestamp="1587281517312" />
     <state x="341" y="164" key="SettingsEditor" timestamp="1585904613782">
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
     <state x="341" y="164" key="SettingsEditor/0.0.1680.1050@0.0.1680.1050" timestamp="1585904613782" />
-    <state x="505" y="233" width="670" height="676" key="search.everywhere.popup" timestamp="1586334595861">
+    <state x="505" y="233" width="670" height="676" key="search.everywhere.popup" timestamp="1587280772601">
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
-    <state x="505" y="233" width="670" height="676" key="search.everywhere.popup/0.0.1680.1050@0.0.1680.1050" timestamp="1586334595861" />
+    <state x="505" y="233" width="670" height="676" key="search.everywhere.popup/0.0.1680.1050@0.0.1680.1050" timestamp="1587280772601" />
   </component>
 </project>

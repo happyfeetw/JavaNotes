@@ -171,6 +171,12 @@ public class HashMap<K,V> extends AbstractMap<K,V>
      * programming practices that are already so slow that this makes
      * little difference.)
      *
+     *      此处解释了
+     *      1. 为何在哈希桶树化前需要判断一次哈希桶的数量（即哈希表的长度
+     *            -> 红黑树节点的大小是链表节点大小的两倍
+     *                  -> 链表节点：只有hash、key、value、next属性
+     *                  -> 红黑树节点：
+     *      2. 哈希桶树化的阈值设置为8的原因
      * Because TreeNodes are about twice the size of regular nodes, we
      * use them only when bins contain enough nodes to warrant use
      * (see TREEIFY_THRESHOLD). And when they become too small (due to
@@ -184,14 +190,6 @@ public class HashMap<K,V> extends AbstractMap<K,V>
      * resizing granularity. Ignoring variance, the expected
      * occurrences of list size k are (exp(-0.5) * pow(0.5, k) /
      * factorial(k)). The first values are:
-     *
-     * 此处解释了
-     *      1. 为何在哈希桶树化前需要判断一次哈希桶的数量（即哈希表的长度
-     *            -> 红黑树节点的大小是链表节点大小的两倍
-     *                  -> 链表节点：只有hash、key、value、next属性
-     *                  -> 红黑树节点：
-     *      2. 哈希桶树化的阈值设置为8的原因
-     *
      *
      * 0:    0.60653066
      * 1:    0.30326533
