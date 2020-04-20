@@ -756,6 +756,11 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * writes to be conservative.
      */
 
+    /**
+     * 下面三个访问表中元素的操作核心都是CAS
+     * 对节点进行CAS操作时，节点的在Java堆内存中的位置（偏移量）直接使用哈希表在Java堆内存中的绝对地址（初始位置+移动量）获取。
+     * 这三个方法是保证ConcurrentHashMap中元素不被并发修改的核心方法。
+     */
     @SuppressWarnings("unchecked")
     static final <K,V> Node<K,V> tabAt(Node<K,V>[] tab, int i) {
         return (Node<K,V>)U.getObjectVolatile(tab, ((long)i << ASHIFT) + ABASE);
@@ -801,7 +806,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      */
     /**
      * 哈希表初始化和容量调整的控制器。
-     * <0时，初始化为-1， 其他情况 = -(1+正在进行容量调整的线程数量)
+     * <0时，初始化为-1， 其他情况 = -(1+正在等待容量调整的线程数量)
      * 另外，在table为null是，该值为哈希表的初始化大小，默认是0
      * 初始化之后，该变量值为下次触发扩容时所需要的元素数量
      */
@@ -818,6 +823,10 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
 
     /**
      * Spinlock (locked via CAS) used when resizing and/or creating CounterCells.
+     */
+    /**
+     * 在扩容或者创建CounterCells的时候使用的自旋锁，通过CAS机制实现
+     * Striped64中也有用到 // todo 后续了解 先mark
      */
     private transient volatile int cellsBusy;
 
@@ -2231,6 +2240,8 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      */
     /**
      * 表示在扩容/缩容操作时，哈希桶中的头节点
+     * 该节点主要用于链接扩容期间的原表和与原表等长的新表
+     * nextTable引用指向新表
      * @param <K>
      * @param <V>
      */
@@ -2238,14 +2249,15 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
         // 新表的引用
         final Node<K,V>[] nextTable;
         ForwardingNode(Node<K,V>[] tab) {
-            // ForwardingNode的hash值为MOVED
+            // ForwardingNode的hash值为MOVED，即-1
             // 若一个节点的hash为moved，表示该桶中的所有节点都是已经迁移完成的
             super(MOVED, null, null, null);
             this.nextTable = tab;
         }
 
         /**
-         * todo
+         * 从新表中查询，而不是旧表
+         * 保证了get数据的正确性
          */
         Node<K,V> find(int h, Object k) {
             // loop to avoid arbitrarily deep recursion on forwarding nodes
@@ -6389,6 +6401,10 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
     private static final long ABASE;
     private static final int ASHIFT;
 
+    /**
+     * 静态代码块中初始化了一些常量
+     * 这些变量表示CAS操作中要修改的目标对象在内存中的偏移量
+     */
     static {
         try {
             U = sun.misc.Unsafe.getUnsafe();
@@ -6409,6 +6425,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             int scale = U.arrayIndexScale(ak);
             if ((scale & (scale - 1)) != 0)
                 throw new Error("data type scale not a power of two");
+            // 元素在哈希表中的偏移值
             ASHIFT = 31 - Integer.numberOfLeadingZeros(scale);
         } catch (Exception e) {
             throw new Error(e);

@@ -151,6 +151,14 @@ public final class Unsafe {
      * @throws RuntimeException No defined exceptions are thrown, not even
      *         {@link NullPointerException}
      */
+    /**
+     * 根据传入的java对象o，和offset值，获取该对象在Java堆中的引用中指定offset的值（一般是一个字段或数组元素）
+     * 如果对象o为null，则直接获取内存中与offset值相同的内存地址（绝对地址值）
+     * todo  double-register/single-register 双重寄存器/单一寄存器？
+     * @param o
+     * @param offset
+     * @return
+     */
     public native int getInt(Object o, long offset);
 
     /**
@@ -904,6 +912,10 @@ public final class Unsafe {
     /**
      * Fetches a reference value from a given Java variable, with volatile
      * load semantics. Otherwise identical to {@link #getObject(Object, long)}
+     */
+    /**
+     * 根据传入的Java对象o，通过volatile语义获取其引用的值
+     * 在其他情况下(不通过volatile语义)，则等同于 getObject(方法)
      */
     public native Object getObjectVolatile(Object o, long offset);
 
