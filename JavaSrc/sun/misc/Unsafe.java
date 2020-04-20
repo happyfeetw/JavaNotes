@@ -580,7 +580,7 @@ public final class Unsafe {
     /// random queries
 
     /**
-     * This constant differs from all results that will ever be returned from
+     * This constant differs from all re
      * {@link #staticFieldOffset}, {@link #objectFieldOffset},
      * or {@link #arrayBaseOffset}.
      */
@@ -713,6 +713,13 @@ public final class Unsafe {
      *
      * @see #getInt(Object, long)
      * @see #putInt(Object, long, int)
+     */
+    /**
+     * 返回一个给定数组类中的第一个元素在Java堆内存中所占区域的偏移量。
+     * 如果通过arrayIndexScale对同一个数组对象计算得到的返回值(factor)不为零
+     * 则可使用该factor与本方法返回的baseOffset组合成一些新的偏移量来访问给定类中的数组的元素
+     * @param arrayClass
+     * @return
      */
     public native int arrayBaseOffset(Class<?> arrayClass);
 

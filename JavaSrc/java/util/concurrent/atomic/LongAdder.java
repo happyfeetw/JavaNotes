@@ -67,6 +67,10 @@ import java.io.Serializable;
  * @since 1.8
  * @author Doug Lea
  */
+
+/**
+ * 高并发下通过消耗更多的内存空间来保证并发性能的AtomicLong
+ */
 public class LongAdder extends Striped64 implements Serializable {
     private static final long serialVersionUID = 7249069246863182397L;
 

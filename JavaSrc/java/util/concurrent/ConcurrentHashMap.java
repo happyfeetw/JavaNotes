@@ -758,8 +758,12 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
 
     /**
      * 下面三个访问表中元素的操作核心都是CAS
-     * 对节点进行CAS操作时，节点的在Java堆内存中的位置（偏移量）直接使用哈希表在Java堆内存中的绝对地址（初始位置+移动量）获取。
+     * 对节点进行CAS操作时，节点的在Java堆内存中的位置（偏移量）直接使用哈希表在Java堆内存中的绝对地址（移动量+基准量）获取。
      * 这三个方法是保证ConcurrentHashMap中元素不被并发修改的核心方法。
+     * ASHIFT -> 移动量，表示tab[i]相对于tab[0]在Java堆内存中的偏移量
+     * ABASE -> 基准量，表示tab[0]在Java内存中的地址值，aka，tab[]对象在内存中的起始位置
+     * todo (long)i << ASHIFT 表示什么？
+     *
      */
     @SuppressWarnings("unchecked")
     static final <K,V> Node<K,V> tabAt(Node<K,V>[] tab, int i) {
@@ -1064,6 +1068,9 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             else {  // 若非初始化、插入新节点、扩容的情况
                 V oldVal = null;
                 // 对该桶位元素加锁，防止对该桶的并发put、remove和transfer操作
+                /**
+                 * 因为f指向tab[i]，锁住f就是锁住一个桶位，进而锁住整个桶内的链表/红黑树根节点
+                 */
                 synchronized (f) {  // 直接使用关键字加锁而不是ReentrantLock的原因，可能是避免创建过多锁对象造成资源浪费
                     /**
                      * 该条件判断哈希表的当前桶位元素是否是f
@@ -2356,6 +2363,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      */
     private final void addCount(long x, int check) {
         CounterCell[] as; long b, s;
+        // putVal中addCount的x值为1L
         if ((as = counterCells) != null ||
             !U.compareAndSwapLong(this, BASECOUNT, b = baseCount, s = b + x)) {
             CounterCell a; long v; int m;
@@ -2363,7 +2371,8 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             if (as == null || (m = as.length - 1) < 0 ||
                 (a = as[ThreadLocalRandom.getProbe() & m]) == null ||
                 !(uncontended =
-                  U.compareAndSwapLong(a, CELLVALUE, v = a.value, v + x))) {
+                  U.compareAndSwapLong(a, CELLVALUE, v = a.value, v + x))) {    // CAS操作失败
+                // 避免线程一直重试CAS操作而影响性能，所以执行下面的方法
                 fullAddCount(x, uncontended);
                 return;
             }
@@ -6422,10 +6431,11 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                 (ck.getDeclaredField("value"));
             Class<?> ak = Node[].class;
             ABASE = U.arrayBaseOffset(ak);
+            // 数组在Java内存中所占的长度
             int scale = U.arrayIndexScale(ak);
             if ((scale & (scale - 1)) != 0)
                 throw new Error("data type scale not a power of two");
-            // 元素在哈希表中的偏移值
+            // 32位系统数组的最大下标31
             ASHIFT = 31 - Integer.numberOfLeadingZeros(scale);
         } catch (Exception e) {
             throw new Error(e);
