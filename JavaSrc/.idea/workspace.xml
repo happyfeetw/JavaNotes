@@ -3,7 +3,6 @@
   <component name="ChangeListManager">
     <list default="true" id="c766bdaf-97f4-4c76-9c60-9a4f5381f02b" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/java/util/concurrent/CompletableFuture.java" beforeDir="false" afterPath="$PROJECT_DIR$/java/util/concurrent/CompletableFuture.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -15,6 +14,9 @@
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
+  </component>
+  <component name="GithubDefaultAccount">
+    <option name="defaultAccountId" value="2e7db2e0-a822-418a-bdea-172a95169bf9" />
   </component>
   <component name="MavenImportPreferences">
     <option name="generalSettings">
@@ -57,7 +59,7 @@
     <property name="project.structure.last.edited" value="Modules" />
     <property name="project.structure.proportion" value="0.15" />
     <property name="project.structure.side.proportion" value="0.2" />
-    <property name="settings.editor.selected.configurable" value="reference.settings.project.maven.importing" />
+    <property name="settings.editor.selected.configurable" value="org.jetbrains.plugins.github.ui.GithubSettingsConfigurable" />
   </component>
   <component name="SvnConfiguration">
     <configuration />
@@ -73,7 +75,7 @@
       <workItem from="1585986035047" duration="5526000" />
       <workItem from="1587346039037" duration="8820000" />
       <workItem from="1587953144523" duration="373000" />
-      <workItem from="1590411890395" duration="694000" />
+      <workItem from="1590411890395" duration="1154000" />
     </task>
     <servers />
   </component>
@@ -92,10 +94,10 @@
     </state>
     <state x="100" y="100" width="1480" height="850" key="DiffContextDialog/0.0.1680.1050@0.0.1680.1050" timestamp="1587281428770" />
     <state x="100" y="100" width="1480" height="850" key="DiffContextDialog/0.23.1680.971@0.23.1680.971" timestamp="1587281517312" />
-    <state x="341" y="164" key="SettingsEditor" timestamp="1585904613782">
+    <state x="341" y="164" key="SettingsEditor" timestamp="1590455531817">
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
-    <state x="341" y="164" key="SettingsEditor/0.0.1680.1050@0.0.1680.1050" timestamp="1585904613782" />
+    <state x="341" y="164" key="SettingsEditor/0.0.1680.1050@0.0.1680.1050" timestamp="1590455531817" />
     <state x="505" y="233" width="670" height="676" key="search.everywhere.popup" timestamp="1590412058893">
       <screen x="0" y="0" width="1680" height="1050" />
     </state>

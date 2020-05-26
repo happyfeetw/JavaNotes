@@ -123,6 +123,11 @@ import java.util.concurrent.Executor;
  * @author Doug Lea
  * @since 1.8
  */
+
+/**
+ * 异步计算中的一个步骤
+ * @param <T>
+ */
 public interface CompletionStage<T> {
 
     /**
