@@ -107,6 +107,13 @@ import java.util.concurrent.locks.LockSupport;
  * @author Doug Lea
  * @since 1.8
  */
+
+/**
+ * 可完成的Future，同时实现了Future和CompletionStage接口
+ * 同时具有Future的功能 --->  异步执行的计算任务
+ * 以及CompletionStage的功能 --->  可作为一个可完成的任务中的某个阶段的描述
+ * @param <T>
+ */
 public class CompletableFuture<T> implements Future<T>, CompletionStage<T> {
 
     /*
