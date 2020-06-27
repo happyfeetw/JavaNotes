@@ -162,13 +162,20 @@ import java.util.stream.Stream;
  * {@link #computeIfAbsent computeIfAbsent}. For example, to add a count
  * to a {@code ConcurrentHashMap<String,LongAdder> freqs}, you can use
  * {@code freqs.computeIfAbsent(k -> new LongAdder()).increment();}
- *
+ * 
+ * ConcurrentHashMap可以用作可扩展的频率映射对象（比如直方图或者多重集的形式），
+ * 具体方法是通过使用java.util.concurrent.atomic.LongAdder类型的值，并通过
+ * computeIfAbsent(...)方法初始化。示例代码如下:
+ * 
+ * 
  * <p>This class and its views and iterators implement all of the
  * <em>optional</em> methods of the {@link Map} and {@link Iterator}
  * interfaces.
  *
  * <p>Like {@link Hashtable} but unlike {@link HashMap}, this class
  * does <em>not</em> allow {@code null} to be used as a key or value.
+ * 
+ * 与hashtable相同的是，本类的key和value都不允许出现null。这一点与hashmap不同。
  *
  * <p>ConcurrentHashMaps support a set of sequential and parallel bulk
  * operations that, unlike most {@link Stream} methods, are designed
