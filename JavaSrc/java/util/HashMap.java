@@ -173,10 +173,31 @@ public class HashMap<K,V> extends AbstractMap<K,V>
      *
      *      此处解释了
      *      1. 为何在哈希桶树化前需要判断一次哈希桶的数量（即哈希表的长度
-     *            -> 红黑树节点的大小是链表节点大小的两倍
+     *            -> 红黑树节点的大小是链表节点大小的两倍, 在使用树节点时，
+                     必须保证哈希桶内有足够的节点(即达到树化临界值的数量).
+                     当桶内元素变得非常少时(通过remove或resize操作)，红黑树
+                     的头节点会被重新转换成普通的链表头节点(即普通的哈希桶节点).
+                     在用户所使用的哈希算法分布足够均匀时, 哈希桶树化的概率极低.
+                     理想情况下, 如果哈希码是随机的, 虽然扩容因子为0.75时该分布的方差
+                     由于resize的粒度影响而变得过大,某个元素被分配到哈希桶内的节点
+                     的频率服从参数为0.5的泊松分布. 
      *                  -> 链表节点：只有hash、key、value、next属性
      *                  -> 红黑树节点：
      *      2. 哈希桶树化的阈值设置为8的原因
+                  -> 忽略方差的情况下, 一个size为k的链表的期望频率为 
+                  (exp(-0.5) * pow(0.5, k) / factorial(k))
+                  具体的值如下所示:
+                 * 0:    0.60653066
+                 * 1:    0.30326533
+                 * 2:    0.07581633
+                 * 3:    0.01263606
+                 * 4:    0.00157952
+                 * 5:    0.00015795
+                 * 6:    0.00001316
+                 * 7:    0.00000094
+                 * 8:    0.00000006
+                 * more: less than 1 in ten million
+
      * Because TreeNodes are about twice the size of regular nodes, we
      * use them only when bins contain enough nodes to warrant use
      * (see TREEIFY_THRESHOLD). And when they become too small (due to
@@ -276,7 +297,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
      * most 6 to mesh with shrinkage detection under removal.
      */
     /**
-     * 不进行树化的桶数量的临界值。
+     * 红黑树结构(tree)退化为链表结构(list)时，树中节点的数量的临界值。
      * 该值必须小于树化的临界值
      * 在删除节点时，为了与红黑树的退化检测机制相配合，该值最大为6
      */

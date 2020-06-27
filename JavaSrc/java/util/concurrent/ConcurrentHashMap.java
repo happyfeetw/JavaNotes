@@ -104,7 +104,19 @@ import java.util.stream.Stream;
  * Otherwise the results of these methods reflect transient states
  * that may be adequate for monitoring or estimation purposes, but not
  * for program control.
- *
+ * 检索操作一般是不阻塞的，所以目标元素可能与更新操作重叠。检索操作返回的结果，是在检索操作发生时，
+ * 最新的已经完成的更新操作的结果。（更正式的说法是，一个对给定key的更新操作，与针对该key的任意
+ * 一个非空的检索结果，遵循一个happens-before的关系。）对于聚合操作（比如putAll()以及clear()），
+ * 并发的检索操作返回的可能仅是某些entries（一个hashtable由多个entry组成）的插入或删除后的结果。
+ * 同样，迭代器和分割器以及枚举返回的元素，也仅仅表示在某个时间点（可能是这个hashtable的迭代器、
+ * 分割器或枚举创建之时或创建之后）的hashtable的状态。
+ * 这些操作不会抛出ConcurrentModificationException（并发修改异常）。
+ * 但是迭代器被设计为在单线程中来使用。
+ * 一定要记住的一点是，返回聚合状态的方法，比如size()、isEmpty()以及containsValue(Object value)
+ * 仅仅在一个map不存在其他线程对其进行并发更新操作的时候，其返回值才是可靠准确的。否则其结果只反映一个瞬时
+ * 状态下map的状态，这些状态可以用来监控和评估某些数据指标，但不能用于程序控制。
+ * 
+ * 
  * <p>The table is dynamically expanded when there are too many
  * collisions (i.e., keys that have distinct hash codes but fall into
  * the same slot modulo the table size), with the expected average
@@ -126,7 +138,18 @@ import java.util.stream.Stream;
  * {@code hashCode()} is a sure way to slow down performance of any
  * hash table. To ameliorate impact, when keys are {@link Comparable},
  * this class may use comparison order among keys to help break ties.
- *
+ * 
+ * 使用建议：
+ *        >1. 创建哈希表时指定初始容量，并指定负载因子定制化地创建一个哈希表，以此
+ *            定制化地计算并分配该哈希表需要的内存空间大小。
+ *        >2. 如果要与之前版本的jdk所编译出的哈希表兼容，可以为构造器指定一个
+ *            concurrencyLevel（并发等级）参数。
+ *        >3. 对任何哈希表而言，对多个key使用相同的hashCode()必然会导致其性能下降。
+ *            为了减少这种影响，当key的类型实现了Comparable接口时，concurrenthashmap
+ *            可以对key使用比较顺序（插入）来突破性能瓶颈。
+ *          
+ * 
+ * 
  * <p>A {@link Set} projection of a ConcurrentHashMap may be created
  * (using {@link #newKeySet()} or {@link #newKeySet(int)}), or viewed
  * (using {@link #keySet(Object)} when only keys are of interest, and the
