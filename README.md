@@ -55,4 +55,4 @@ A graphic note about Java and relevant techs for self-teaching. Will be updated 
 As the comments in Java sourcecode and Java docs are the best materials to learn, you should go directly to read them if you are a native English speaker or have a good capacity of using English.
 
 
-If you still want to read this note for a purpose such as learning Chinese (just a kidding), you are warmly welcome to open an issue and discuss with me :)
+If you still want to read this note for a purpose such as learning Chinese (just kidding), you are warmly welcome to open an issue and discuss with me :)
