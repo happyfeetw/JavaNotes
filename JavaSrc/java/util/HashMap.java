@@ -177,7 +177,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
                      必须保证哈希桶内有足够的节点(即达到树化临界值的数量).
                      当桶内元素变得非常少时(通过remove或resize操作)，红黑树
                      的头节点会被重新转换成普通的链表头节点(即普通的哈希桶节点).
-                     在用户所使用的哈希算法分布足够均匀时, 哈希桶树化的概率极低.
+                     在用户所使用的哈希算法分布足够均匀时, 哈希桶内链表的树化概率极低.
                      理想情况下, 如果哈希码是随机的, 虽然扩容因子为0.75时该分布的方差
                      由于resize的粒度影响而变得过大,某个元素被分配到哈希桶内的节点
                      的频率服从参数为0.5的泊松分布. 
@@ -186,17 +186,20 @@ public class HashMap<K,V> extends AbstractMap<K,V>
      *      2. 哈希桶树化的阈值设置为8的原因
                   -> 忽略方差的情况下, 一个size为k的链表的期望频率为 
                   (exp(-0.5) * pow(0.5, k) / factorial(k))
+                  该期望频率表示链表实际长度为k的概率
                   具体的值如下所示:
-                 * 0:    0.60653066
-                 * 1:    0.30326533
+                 * 0:    0.60653066     链表长度为0的概率
+                 * 1:    0.30326533     链表长度为1的概率
                  * 2:    0.07581633
                  * 3:    0.01263606
                  * 4:    0.00157952
                  * 5:    0.00015795
                  * 6:    0.00001316
                  * 7:    0.00000094
-                 * 8:    0.00000006
+                 * 8:    0.00000006     链表长度为8的概率
                  * more: less than 1 in ten million
+             由于红黑树节点占用的内存大小是链表节点的两倍，若频繁地对链表进行【链表<->红黑树】的操作，
+             会极大消耗内存资源。
 
      * Because TreeNodes are about twice the size of regular nodes, we
      * use them only when bins contain enough nodes to warrant use
@@ -312,7 +315,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
     /**
      * 哈希桶可以转化为红黑树的最小哈希表长度
      * 若再小，则哈希表在单个桶中节点数量过多时，会被resize
-     * 该值至少应为树化临界值的4倍，以此来避免resize和树化临界值发生冲突(不理解)
+     * 该值至少应为树化临界值的4倍（32），以此来避免resize和树化临界值发生冲突(不理解)
      * 意义：
      *      在桶的树化前，除了判断桶的长度，还需要判断一次哈希表的长度
      *      只有表长度大于该值才会进行树化。
@@ -448,6 +451,13 @@ public class HashMap<K,V> extends AbstractMap<K,V>
 
     /**
      * Returns a power of two size for the given target capacity.
+     * 返回一个最小的大于等于cap（初始容量）的2的幂
+     * 并将该值作为hashmap的扩容（resize）阈值（threshold）
+     * 当下一个插入的值会使hashmap的容量变为threshold的值时，会触发resize操作。
+     * 比如
+     *      当cap=5时，tableSizeFor(5)=8，表示threshold为8，默认情况下负载因子为0.75
+     *      则调用构造函数时，会将8和0.75传入并保存。
+     *      在put操作时
      */
     static final int tableSizeFor(int cap) {
         int n = cap - 1;
@@ -580,15 +590,22 @@ public class HashMap<K,V> extends AbstractMap<K,V>
     final void putMapEntries(Map<? extends K, ? extends V> m, boolean evict) {
         int s = m.size();
         if (s > 0) {
+            // table属性只在第一次被使用时才会初始化
             if (table == null) { // pre-size
+                // 根据当前的负载因子和map的大小计算阈值ft
+                // loadFactor = size / threshold
                 float ft = ((float)s / loadFactor) + 1.0F;
+                // 如果threshold小于最大容量（正常情况都会小于它），则将刚才计算得到的
+                // threshold与构造时根据初始容量通过tableSizeFor(cap)函数计算得到的阈值比较
+                // 如果新计算的threshold比构造时的旧的threshold大，
+                // 则将新计算的阈值作为当前容量，重新计算一个阈值并更新theshold属性
                 int t = ((ft < (float)MAXIMUM_CAPACITY) ?
                          (int)ft : MAXIMUM_CAPACITY);
                 if (t > threshold)
                     threshold = tableSizeFor(t);
-            }
-            else if (s > threshold)
+            } else if (s > threshold) // 哈希表存在且当前map的大小已经超过阈值，则直接触发resize
                 resize();
+            // 判断之后执行插入方法
             for (Map.Entry<? extends K, ? extends V> e : m.entrySet()) {
                 K key = e.getKey();
                 V value = e.getValue();
@@ -726,13 +743,13 @@ public class HashMap<K,V> extends AbstractMap<K,V>
     final V putVal(int hash, K key, V value, boolean onlyIfAbsent,
                    boolean evict) {
         Node<K,V>[] tab; Node<K,V> p; int n, i;
-        // 判断哈希表是否初始化 -> 根据哈希表引用以及表的大小
+        // 判断链表是否存在（哈希表是否已初始化） -> 根据哈希表引用是否存在以及表的大小
         if ((tab = table) == null || (n = tab.length) == 0)
             // 没有初始化，则resize
             n = (tab = resize()).length;
 
-        if ((p = tab[i = (n - 1) & hash]) == null)
-            tab[i] = newNode(hash, key, value, null); // 此时tab[i]已经赋值给p了
+        if ((p = tab[i = (n - 1) & hash]) == null) //哈希表的长度与哈希值做逻辑与操作
+            tab[i] = newNode(hash, key, value, null); // tab[i]位置的元素为null，不存在哈希冲突，直接利用数据构造node存入该位置
         else {
             Node<K,V> e; K k;
             if (p.hash == hash &&
