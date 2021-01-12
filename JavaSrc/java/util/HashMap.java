@@ -750,20 +750,21 @@ public class HashMap<K,V> extends AbstractMap<K,V>
 
         if ((p = tab[i = (n - 1) & hash]) == null) //哈希表的长度与哈希值做逻辑与操作
             tab[i] = newNode(hash, key, value, null); // tab[i]位置的元素为null，不存在哈希冲突，直接利用数据构造node存入该位置
-        else {
+        else { // 存在哈希冲突
             Node<K,V> e; K k;
             if (p.hash == hash &&
                 ((k = p.key) == key || (key != null && key.equals(k))))
+                // 如果节点p的key哈希值与待put的节点key的哈希值相同，且两个key相等，则覆盖旧值
                 e = p;
-            else if (p instanceof TreeNode)
+            else if (p instanceof TreeNode) // 如果冲突位置的节点是红黑树节点
                 // 红黑树的正常put，调用putTreeVal()方法
                 e = ((TreeNode<K,V>)p).putTreeVal(this, tab, hash, key, value);
-            else {
+            else { // 冲突位置的节点不是红黑树节点
                 // 如果桶内是链表实现，则采用尾部插入
                 for (int binCount = 0; ; ++binCount) {
                     // 当p为尾部节点时，将p指向e，
-                    if ((e = p.next) == null) {
-                        // 判断将要插入的节点放到链表尾部
+                    if ((e = p.next) == null) { // 当前发生冲突的位置上的节点p的next指针为null
+                        // 则用新数据构建新节点放到p的尾部（尾插法）
                         p.next = newNode(hash, key, value, null);
                         // 如果插入前桶内链表的节点个数为7（8为临界值）则对桶树化，然后跳出
                         if (binCount >= TREEIFY_THRESHOLD - 1) // -1 for 1st
