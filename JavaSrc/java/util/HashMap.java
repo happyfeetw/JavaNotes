@@ -822,7 +822,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
                 threshold = Integer.MAX_VALUE;
                 return oldTab;
             }
-            // 按照初始长度的两倍扩容后，判断哈希表是否小于最大允许值（2的30次幂）且大于默认初始化长度（16）
+            // 判断初始长度扩容一倍之后的哈希表的长度是否小于最大允许值（2的30次幂）且大于默认初始化长度（16）
             else if ((newCap = oldCap << 1) < MAXIMUM_CAPACITY &&
                      oldCap >= DEFAULT_INITIAL_CAPACITY)
                 // 符合条件，则同时将resize阈值扩容一倍
@@ -904,7 +904,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
                             // 用人话说：放在lo链表所在桶位的后面的桶位
                             newTab[j + oldCap] = hiHead;
                         }
-                        /**
+                        /*
                          * 这里关于扩容后元素位置的计算方式，
                          * 一个很重要的地方在于 (e.hash & oldCap) == 0这个判断。
                          * 由于哈希表的长度一定是2的幂，且扩容方式也是增加一倍，
