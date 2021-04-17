@@ -63,6 +63,7 @@ public class Object {
     public final native Class<?> getClass();
 
     /**
+     * {@code equals(Object)}使用哈希码来判断对象是否相等
      * Returns a hash code value for the object. This method is
      * supported for the benefit of hash tables such as those provided by
      * {@link java.util.HashMap}.
@@ -133,6 +134,7 @@ public class Object {
      * {@code y}, this method returns {@code true} if and only
      * if {@code x} and {@code y} refer to the same object
      * ({@code x == y} has the value {@code true}).
+     * 对于非空引用的值x，y，当且仅当x与y指向同一个对象时，x与y相等。即x==y
      * <p>
      * Note that it is generally necessary to override the {@code hashCode}
      * method whenever this method is overridden, so as to maintain the
