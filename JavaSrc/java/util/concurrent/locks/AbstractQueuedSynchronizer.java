@@ -400,19 +400,20 @@ public abstract class AbstractQueuedSynchronizer
         static final Node EXCLUSIVE = null;
 
         /** waitStatus value to indicate thread has cancelled */
-        // 同步状态值，该值表明线程已被取消
+        // 同步状态值，该值表明线程已被取消，是终结状态
         static final int CANCELLED =  1;
         /** waitStatus value to indicate successor's thread needs unparking */
-        // 同步状态值，该值表明当前节点的后继节点中线程需要恢复运行（unparking）
+        // 同步状态值，该值表明当前节点的后继节点中线程被阻塞或即将被阻塞（unparking）
         static final int SIGNAL    = -1;
         /** waitStatus value to indicate thread is waiting on condition */
-        // 同步状态值，该值表明线程正在基于某条件等待
+        // 同步状态值，该值表明线程正在基于某条件等待，并处于condition队列中
         static final int CONDITION = -2;
         /**
          * waitStatus value to indicate the next acquireShared should
          * unconditionally propagate
          */
         // 同步状态只，该值表明下一个共享式获取锁的行为应无条件传播
+        // 该状态表示当前节点（头节点）正要将获取锁的权限传递给后继节点。
         static final int PROPAGATE = -3;
 
         /**

@@ -409,6 +409,7 @@ public final class Class<T> implements java.io.Serializable,
             }
             try {
                 Class<?>[] empty = {};
+                // 获取构造器 empty是构造器参数列表的参数类型数组，Member.DECLARED
                 final Constructor<T> c = getConstructor0(empty, Member.DECLARED);
                 // Disable accessibility checks on the constructor
                 // since we have to do the security check here anyway
@@ -439,6 +440,8 @@ public final class Class<T> implements java.io.Serializable,
         }
         // Run constructor
         try {
+            // 调用构造器
+            // 如果目标类是枚举类型，则报错。
             return tmpConstructor.newInstance((Object[])null);
         } catch (InvocationTargetException e) {
             Unsafe.getUnsafe().throwException(e.getTargetException());

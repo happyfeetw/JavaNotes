@@ -412,6 +412,7 @@ public final class Constructor<T> extends Executable {
                 checkAccess(caller, clazz, null, modifiers);
             }
         }
+        // 如果目标类是枚举类型，则不支持通过构造器方式获取枚举类型的实例
         if ((clazz.getModifiers() & Modifier.ENUM) != 0)
             throw new IllegalArgumentException("Cannot reflectively create enum objects");
         ConstructorAccessor ca = constructorAccessor;   // read volatile
