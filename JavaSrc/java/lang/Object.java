@@ -185,6 +185,7 @@ public class Object {
      * the case that no fields in the object returned by {@code super.clone}
      * need to be modified.
      * <p>
+     *  克隆的机制
      * The method {@code clone} for class {@code Object} performs a
      * specific cloning operation. First, if the class of this object does
      * not implement the interface {@code Cloneable}, then a

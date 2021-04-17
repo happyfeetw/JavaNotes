@@ -548,13 +548,18 @@ public class TreeMap<K,V>
         Comparator<? super K> cpr = comparator;
         if (cpr != null) {
             do {
+                // 将根节点赋值给父节点
                 parent = t;
+                // 比较新插入的元素的key与根节点元素的key
                 cmp = cpr.compare(key, t.key);
-                if (cmp < 0)
+                if (cmp < 0) // 新插入的元素key小于根节点元素的key
+                    // 将根节点的左子节点旋转到根节点位置
                     t = t.left;
-                else if (cmp > 0)
+                else if (cmp > 0) // 新插入的元素key大于根节点元素的key
+                    // 将根节点的右子节点旋转到根节点位置
                     t = t.right;
                 else
+                    // 为根节点赋值
                     return t.setValue(value);
             } while (t != null);
         }
