@@ -151,15 +151,24 @@ public class LinkedList<E>
 
     /**
      * Inserts element e before non-null Node succ.
+     * 双向链表任意位置插入元素
+     * 先建立新引用，再打断原先的引用
+     * @param succ 待插入位置的后一个元素
      */
     void linkBefore(E e, Node<E> succ) {
         // assert succ != null;
+        // pred表示原先位置的前一个元素
         final Node<E> pred = succ.prev;
+        // 生成一个新的双链表节点，并将新节点的前驱指针和后继指针先指向succ的前一个元素和succ自身
         final Node<E> newNode = new Node<>(pred, e, succ);
+        // 先将后一个元素的前驱指针指向新节点
         succ.prev = newNode;
+        // 判断原先位置的前一个节点是否为空
         if (pred == null)
+            // 为空，表示当前链表只有一个节点，此时将新节点放入当前链表的头节点，即将当前链表的头节点指针指向新节点
             first = newNode;
         else
+            // 不为空，则将原先位置前一个节点的后继指针指向新节点
             pred.next = newNode;
         size++;
         modCount++;

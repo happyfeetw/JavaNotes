@@ -130,6 +130,7 @@ public class ArrayList<E> extends AbstractList<E>
      * The capacity of the ArrayList is the length of this array buffer. Any
      * empty ArrayList with elementData == DEFAULTCAPACITY_EMPTY_ELEMENTDATA
      * will be expanded to DEFAULT_CAPACITY when the first element is added.
+     * transient修饰，不希望该属性被序列化
      */
     transient Object[] elementData; // non-private to simplify nested class access
 
@@ -743,7 +744,7 @@ public class ArrayList<E> extends AbstractList<E>
     /**
      * Save the state of the <tt>ArrayList</tt> instance to a stream (that
      * is, serialize it).
-     *
+     * 序列化ArrayList的实例，即将一个ArrayList的实例保存到一个流中
      * @serialData The length of the array backing the <tt>ArrayList</tt>
      *             instance is emitted (int), followed by all of its elements
      *             (each an <tt>Object</tt>) in the proper order.
