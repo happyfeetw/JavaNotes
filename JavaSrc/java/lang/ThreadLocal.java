@@ -213,7 +213,7 @@ public class ThreadLocal<T> {
      * unless its value is {@linkplain #set set} by the current thread
      * in the interim.  This may result in multiple invocations of the
      * {@code initialValue} method in the current thread.
-     *
+     * 对threadlocal的使用结束之后必须调用remove方法，避免造成内存泄漏
      * @since 1.5
      */
      public void remove() {
